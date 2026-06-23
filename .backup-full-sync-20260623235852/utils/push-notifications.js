@@ -122,9 +122,9 @@ async function getRegistroServiceWorkerPush() {
     return ready || null;
 }
 
-async function guardarSuscripcionPush(subscription, role, clienteWhatsapp) {
+async function guardarSuscripcionPush(subscription, role) {
     const negocioId = getNegocioIdPush();
-    console.log('[Push] guardarSuscripcionPush - negocioId:', negocioId, 'role:', role, 'cliente:', clienteWhatsapp || 'sin whatsapp');
+    console.log('[Push] guardarSuscripcionPush - negocioId:', negocioId, 'role:', role);
     if (!negocioId) throw new Error('No hay negocio_id para guardar la suscripcion push.');
 
     const payload = {
@@ -136,8 +136,6 @@ async function guardarSuscripcionPush(subscription, role, clienteWhatsapp) {
         activo: true,
         updated_at: new Date().toISOString()
     };
-
-    if (clienteWhatsapp) payload.cliente_whatsapp = clienteWhatsapp;
 
     console.log('[Push] endpoint:', subscription.endpoint?.substring(0, 60));
     console.log('[Push] SUPABASE_URL:', window.SUPABASE_URL);
@@ -212,37 +210,11 @@ window.solicitarPushRservasRoma = async function(options = {}) {
             });
             console.log('[Push] suscripcion creada:', subscription.endpoint?.substring(0, 60));
         }
-        await guardarSuscripcionPush(subscription.toJSON ? subscription.toJSON() : subscription, role, options.clienteWhatsapp);
+        await guardarSuscripcionPush(subscription.toJSON ? subscription.toJSON() : subscription, role);
         return { ok: true };
     } catch (err) {
         console.error('[Push] error:', err.name, err.message);
         return { ok: false, error: err.message };
-    }
-};
-
-// Envía push a una clienta específica por su whatsapp en este negocio
-window.enviarPushCliente = async function({ whatsapp, title, body, url = '' } = {}) {
-    try {
-        if (!whatsapp || !title) return false;
-        const negocioId = getNegocioIdPush();
-        if (!negocioId || !window.SUPABASE_URL || !window.SUPABASE_ANON_KEY) return false;
-
-        const response = await fetch(`${window.SUPABASE_URL}/functions/v1/${window.RSERVAS_PUSH_FUNCTION}`, {
-            method: 'POST',
-            headers: {
-                apikey: window.SUPABASE_ANON_KEY,
-                Authorization: `Bearer ${window.SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ negocio_id: negocioId, cliente_whatsapp: whatsapp, title, body, url })
-        });
-
-        const result = await response.json().catch(() => ({}));
-        if (result?.sent > 0) console.log(`[Push cliente] Enviado a ${whatsapp}`);
-        return result?.sent > 0;
-    } catch (err) {
-        console.warn('[Push cliente] Error:', err.message);
-        return false;
     }
 };
 
@@ -284,6 +256,7 @@ window.enviarWebPushRservasRoma = async function({ title, body, url = '', role =
 };
 
 function instalarBotonPushAdmin() {
+    return;
     if (document.getElementById('rservas-push-button')) return;
     if (!pushKeyConfigurada()) return;
     if (!('Notification' in window) || Notification.permission === 'granted') return;

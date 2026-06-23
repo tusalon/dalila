@@ -118,16 +118,22 @@ function ClientApp() {
     React.useEffect(() => {
         if (selectedProfesional) {
             setTimeout(() => {
-                document.getElementById('calendar-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+                document.getElementById('calendar-section')?.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }, 300);
         }
     }, [selectedProfesional]);
 
     React.useEffect(() => {
         if (selectedDate) {
             setTimeout(() => {
-                document.getElementById('time-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
+                document.getElementById('time-section')?.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }, 300);
         }
     }, [selectedDate]);
 
@@ -146,28 +152,17 @@ function ClientApp() {
         navigateTo('service');
     };
 
-    const handleServiceSelect = async (service) => {
+    const handleServiceSelect = (service) => {
         setSelectedService(service);
         setSelectedProfesional(null);
         setSelectedDate('');
         setSelectedTime('');
         setHorariosPorDia({});
-
-        // Si solo hay 1 profesional activo, auto-seleccionarlo y saltar al calendario
-        try {
-            const profesionales = await window.salonProfesionales?.getAll?.();
-            const activos = (profesionales || []).filter(p => p.activo !== false);
-            if (activos.length === 1) {
-                setSelectedProfesional(activos[0]);
-                setTimeout(() => {
-                    document.getElementById('calendar-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 150);
-                return;
-            }
-        } catch {}
-
         setTimeout(() => {
-            document.getElementById('profesional-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementById('profesional-section')?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
         }, 150);
     };
 
@@ -249,7 +244,7 @@ function ClientApp() {
                             showBackButton={true}
                         />
                         
-                        <div className="max-w-3xl mx-auto px-4 py-4 space-y-4 pb-20">
+                        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6 pb-20">
                             {/* SECCIÓN 1: SERVICIOS */}
                             <ServiceSelection 
                                 onSelect={handleServiceSelect} 

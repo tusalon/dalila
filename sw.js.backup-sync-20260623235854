@@ -1,6 +1,6 @@
 // sw.js - Service Worker para DALILA
 
-const CACHE_NAME = 'dalila-v65';
+const CACHE_NAME = 'dalila-v1';
 const BASE = '/dalila';
 
 const urlsToCache = [
@@ -84,7 +84,6 @@ const urlsToCache = [
   `${BASE}/icons/icon-192x192.png`,
   `${BASE}/icons/icon-384x384.png`,
   `${BASE}/icons/icon-512x512.png`,
-  `${BASE}/icons/badge.svg`,
 ];
 
 // URLs externas — nunca interceptar
@@ -177,7 +176,7 @@ self.addEventListener('push', event => {
   event.waitUntil(self.registration.showNotification(payload.title || 'RservasRoma', {
     body: payload.body || 'Tienes una nueva notificación',
     icon: `${BASE}/icons/icon-192x192.png`,
-    badge: `${BASE}/icons/badge.svg`,
+    badge: `${BASE}/icons/icon-96x96.png`,
     tag: payload.tag || 'rservasroma',
     data: { url: payload.url || `${BASE}/admin.html`, ...(payload.data || {}) },
   }));
@@ -185,12 +184,7 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  let targetUrl = event.notification?.data?.url || `${BASE}/`;
-  // Si la URL es relativa, convertirla a absoluta usando el scope del SW
-  if (targetUrl.startsWith('/') && !targetUrl.startsWith('//')) {
-    const scope = self.registration.scope || `https://tusalon.github.io${BASE}/`;
-    targetUrl = scope.replace(/\/$/, '') + (targetUrl === '/' ? '' : targetUrl);
-  }
+  const targetUrl = event.notification?.data?.url || `${BASE}/admin.html`;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       for (const c of list) {

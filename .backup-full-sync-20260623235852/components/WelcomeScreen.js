@@ -12,15 +12,11 @@ function WelcomeScreen({ onStart, onGoBack, cliente, userRol }) {
         if (!('Notification' in window)) { setPushEstado('unsupported'); return; }
         const permiso = Notification.permission;
         setPushEstado(permiso);
-        // Si tiene permiso y whatsapp disponible, actualizar suscripción para vincular el numero
-        if (permiso === 'granted' && cliente?.whatsapp) {
-            // APK nativa: usa push nativo de Capacitor
-            if (typeof window.solicitarNativePushRservasRoma === 'function' && window.Capacitor?.isNativePlatform?.()) {
-                window.solicitarNativePushRservasRoma({ defaultRole: 'cliente' }).catch(() => {});
-            }
-            // Web/PWA: usa web push VAPID
+        // Si ya tiene permiso pero no suscripción guardada, suscribirse automáticamente
+        if (permiso === 'granted' && !localStorage.getItem('rservasPushActivo')) {
             if (typeof window.solicitarPushRservasRoma === 'function') {
-                window.solicitarPushRservasRoma({ permission: 'granted', defaultRole: 'cliente', clienteWhatsapp: cliente.whatsapp })
+                window.solicitarPushRservasRoma({ permission: 'granted', defaultRole: 'cliente' })
+                    .then(res => { if (res?.ok) console.log('[Push] suscripcion auto-guardada'); })
                     .catch(() => {});
             }
         }
@@ -50,7 +46,7 @@ function WelcomeScreen({ onStart, onGoBack, cliente, userRol }) {
                     setActivandoPush(false);
                     return;
                 }
-                window.solicitarPushRservasRoma({ permission: permiso, defaultRole: 'cliente', clienteWhatsapp: cliente?.whatsapp })
+                window.solicitarPushRservasRoma({ permission: permiso, defaultRole: 'cliente' })
                     .then(res => {
                         if (res?.ok) {
                             setPushMensaje('');
@@ -290,9 +286,6 @@ function WelcomeScreen({ onStart, onGoBack, cliente, userRol }) {
                         )}
 
                         {/* Botón notificaciones */}
-                        {pushEstado === 'denied' && (
-                            <p className="text-white/50 text-xs text-center">🔔 Notificaciones bloqueadas — actívalas en Ajustes del teléfono</p>
-                        )}
                         {pushEstado !== 'unsupported' && pushEstado !== 'denied' && (
                             <div className="space-y-1">
                                 {pushEstado === 'granted' ? (

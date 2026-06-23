@@ -3,21 +3,12 @@
 
 console.log('📱 whatsapp-helper.js cargado');
 
-function getBaseUrl() {
-    try {
-        // Usa la URL actual del sitio: https://tusalon.github.io/dalila/ etc.
-        const parts = window.location.pathname.split('/').filter(Boolean);
-        const slug = parts[0] || '';
-        return `${window.location.origin}/${slug}/`;
-    } catch {
-        return 'https://tusalon.github.io/exoticnailsbyyuly/';
-    }
-}
+const CALENDARIO_PUBLICO_BASE_URL = 'https://tusalon.github.io/exoticnailsbyyuly/';
 
 function generarLinkCalendarioCliente(booking) {
     if (!booking?.id) return '';
 
-    const calendarUrl = new URL('calendar.html', getBaseUrl());
+    const calendarUrl = new URL('calendar.html', CALENDARIO_PUBLICO_BASE_URL);
 
     calendarUrl.searchParams.set('id', booking.id);
     if (booking.negocio_id) {
@@ -86,10 +77,7 @@ async function calcularMontoAnticipo(configNegocio, servicioNombre) {
     }
 
     const porcentaje = (configNegocio.valor_anticipo || 0) / 100;
-    const resultado = precioServicio * porcentaje;
-    // Para CUP redondear a entero, para USD preservar 2 decimales
-    const moneda = String(configNegocio?.whatsapp_moneda || 'CUP').toUpperCase();
-    return moneda === 'USD' ? Math.round(resultado * 100) / 100 : Math.round(resultado);
+    return Math.round(precioServicio * porcentaje);
 }
 
 async function calcularTotalReserva(booking) {
@@ -128,10 +116,7 @@ async function calcularTotalReserva(booking) {
 function formatearMontoReserva(monto, moneda = 'CUP') {
     const numero = parseFloat(monto);
     if (!Number.isFinite(numero) || numero <= 0) return '';
-    // USD: siempre 2 decimales (25.00, 12.50). CUP: sin decimales si es entero
-    const limpio = moneda === 'USD'
-        ? numero.toFixed(2)
-        : (numero % 1 === 0 ? numero.toFixed(0) : numero.toFixed(2));
+    const limpio = numero % 1 === 0 ? numero.toFixed(0) : numero.toFixed(2);
     return `${limpio} ${moneda}`;
 }
 
@@ -410,15 +395,6 @@ ${lineaCalendario}
 ¡Te esperamos! ❤️`;
 
         window.enviarWhatsApp(booking.cliente_whatsapp, mensajeConfirmacion);
-
-        if (window.enviarPushCliente) {
-            window.enviarPushCliente({
-                whatsapp: booking.cliente_whatsapp,
-                title: `💅 Cita agendada — ${configNegocio?.nombre || 'Tu salón'}`,
-                body: `${booking.servicio} el ${getFechaHora(booking).fechaConDia} a las ${getFechaHora(booking).horaFormateada}`,
-            }).catch(() => {});
-        }
-
         return true;
     } catch (error) {
         console.error('Error en enviarConfirmacionReserva:', error);
@@ -464,15 +440,6 @@ Te esperamos ❤️
 Cualquier cambio, podés cancelarlo desde la app con hasta 1 hora de anticipación.`;
 
         window.enviarWhatsApp(booking.cliente_whatsapp, mensajeConfirmacion);
-
-        if (window.enviarPushCliente) {
-            window.enviarPushCliente({
-                whatsapp: booking.cliente_whatsapp,
-                title: `✅ Pago confirmado — ${nombreNegocio}`,
-                body: `Tu turno de ${booking.servicio} el ${fechaConDia} a las ${horaFormateada} está confirmado.`,
-            }).catch(() => {});
-        }
-
         console.log('✅ Mensaje de confirmación de pago enviado');
         return true;
     } catch (error) {
@@ -566,15 +533,6 @@ ${lineaCalendario}
             'calendar',
             'default'
         );
-
-        // Push a la clienta: confirmación de su cita
-        if (window.enviarPushCliente) {
-            window.enviarPushCliente({
-                whatsapp: booking.cliente_whatsapp,
-                title: `✅ Cita confirmada — ${config.nombre}`,
-                body: `${booking.servicio} el ${fechaConDia} a las ${horaFormateada}`,
-            }).catch(() => {});
-        }
 
         console.log('✅ Notificaciones de nueva reserva enviadas');
         return true;
@@ -707,30 +665,26 @@ Hola *${booking.cliente_nombre}*, lamentamos informarte que tu turno ha sido can
         if (canceladoPor === 'cliente') {
             window.enviarWhatsApp(config.telefono, mensajeDuenno);
             console.log('📱 Admin notificado de cancelación por cliente');
-            // Push al admin
-            await window.enviarNotificacionPush(
-                `❌ ${config.nombre} - Cancelación`,
-                `❌ ${booking.cliente_nombre} canceló\n💅 ${booking.servicio}\n📅 ${fechaConDia} ${horaFormateada}`,
-                'x', 'default'
-            );
         } else {
             const telefonoCliente = booking.cliente_whatsapp.replace(/\D/g, '');
             window.enviarWhatsApp(telefonoCliente, mensajeCliente);
             console.log('📱 Cliente notificado de cancelación por admin');
-            // Push al admin y a la clienta
-            await window.enviarNotificacionPush(
-                `❌ ${config.nombre} - Cancelación`,
-                `❌ Cancelado: ${booking.cliente_nombre}\n💅 ${booking.servicio}\n📅 ${fechaConDia} ${horaFormateada}`,
-                'x', 'default'
-            );
-            if (window.enviarPushCliente) {
-                window.enviarPushCliente({
-                    whatsapp: booking.cliente_whatsapp,
-                    title: `❌ Cita cancelada — ${config.nombre}`,
-                    body: `Tu cita de ${booking.servicio} el ${fechaConDia} fue cancelada.`,
-                }).catch(() => {});
-            }
         }
+
+        const mensajePush =
+`❌ CANCELACIÓN - ${config.nombre}
+👤 Cliente: ${booking.cliente_nombre}
+📱 WhatsApp: ${booking.cliente_whatsapp}
+💅 Servicio: ${booking.servicio}
+📅 Fecha: ${fechaConDia}
+${canceladoPor === 'cliente' ? '🔔 Cancelado por cliente' : '🔔 Cancelado por admin'}`;
+
+        await window.enviarNotificacionPush(
+            `❌ ${config.nombre} - Cancelación`,
+            mensajePush,
+            'x',
+            'default'
+        );
 
         console.log('✅ Notificaciones de cancelación enviadas');
         return true;

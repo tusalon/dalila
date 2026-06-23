@@ -379,14 +379,14 @@
     <script src="utils/profesionales.js"></script>
     <script src="utils/whatsapp-helper.js?v=20260619-whatsapp-costos"></script>
     <script src="utils/push-config.js?v=20260621"></script>
-    <script src="utils/push-notifications.js?v=20260621c"></script>
+    <script src="utils/push-notifications.js?v=20260621b"></script>
      <script src="utils/dias-cerrados.js"></script>
 
     <!-- Componentes -->
     <script src="components/Header.js" type="text/babel"></script>
     <script src="components/ServiceSelection.js" type="text/babel"></script>
     <script src="components/ServiceSelectionTabs.js" type="text/babel"></script>
-    <script src="components/ServiceSelectionCategorias.js?v=20260526-tema-global" type="text/babel"></script>
+    <script src="components/ServiceSelectionCategorias.js?v=20260513-tema-global" type="text/babel"></script>
     <script src="components/ProfesionalSelector.js" type="text/babel"></script>
     <script src="components/MultiProfesionalSelector.js" type="text/babel"></script>
     <script src="components/Calendar.js?v=20260530-lista-espera-dia-lleno-fix2" type="text/babel"></script>
