@@ -95,30 +95,6 @@ async function calcularMontoAnticipo(configNegocio, servicioNombre) {
 async function calcularTotalReserva(booking) {
     if (!booking) return 0;
 
-    const calcularTotalPorServicios = async () => {
-        let precioServicio = 0;
-        if (window.salonServicios) {
-            const servicios = await window.salonServicios.getAll(true);
-            const nombres = String(booking.servicio || '').split(' + ').map(nombre => nombre.trim()).filter(Boolean);
-            const serviciosEncontrados = servicios.filter(s => nombres.includes(s.nombre));
-
-            if (serviciosEncontrados.length > 0) {
-                precioServicio = serviciosEncontrados.reduce((total, servicio) => total + (parseFloat(servicio.precio) || 0), 0);
-            } else {
-                const servicio = servicios.find(s => s.nombre === booking.servicio);
-                if (servicio) precioServicio = parseFloat(servicio.precio) || 0;
-            }
-        }
-
-        return precioServicio;
-    };
-
-    const nombresServicio = String(booking.servicio || '').split(' + ').map(nombre => nombre.trim()).filter(Boolean);
-    if (nombresServicio.length > 1) {
-        const totalServicios = await calcularTotalPorServicios();
-        if (totalServicios > 0) return totalServicios;
-    }
-
     const valoresDirectos = [
         booking.total_pagar,
         booking.total,
@@ -132,7 +108,21 @@ async function calcularTotalReserva(booking) {
         if (Number.isFinite(numero) && numero > 0) return numero;
     }
 
-    return calcularTotalPorServicios();
+    let precioServicio = 0;
+    if (window.salonServicios) {
+        const servicios = await window.salonServicios.getAll(true);
+        const nombres = String(booking.servicio || '').split(' + ').map(nombre => nombre.trim()).filter(Boolean);
+        const serviciosEncontrados = servicios.filter(s => nombres.includes(s.nombre));
+
+        if (serviciosEncontrados.length > 0) {
+            precioServicio = serviciosEncontrados.reduce((total, servicio) => total + (parseFloat(servicio.precio) || 0), 0);
+        } else {
+            const servicio = servicios.find(s => s.nombre === booking.servicio);
+            if (servicio) precioServicio = parseFloat(servicio.precio) || 0;
+        }
+    }
+
+    return precioServicio;
 }
 
 function formatearMontoReserva(monto, moneda = 'CUP') {

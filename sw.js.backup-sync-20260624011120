@@ -1,6 +1,6 @@
 // sw.js - Service Worker para DALILA
 
-const CACHE_NAME = 'dalila-v66';
+const CACHE_NAME = 'dalila-v65';
 const BASE = '/dalila';
 
 const urlsToCache = [
